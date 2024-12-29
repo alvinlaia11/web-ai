@@ -1,17 +1,26 @@
 import React, { useEffect, useRef } from 'react'
-import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
+import ChatMessage from './ChatMessage'
+import { useTranslation } from '../hooks/useTranslation'
 
-const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading, isMobile }) => {
-  const messagesEndRef = useRef(null)
+const ChatArea = ({ 
+  pesan, 
+  inputPesan, 
+  setInputPesan, 
+  onSubmit, 
+  isLoading,
+  isMobile,
+  settings,
+  setIsSidebarOpen,
+  onOpenSettings,
+  activeChat
+}) => {
+  const { t } = useTranslation(settings?.language)
   const chatContainerRef = useRef(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+  const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [pesan, isLoading])
 
   return (
@@ -30,8 +39,8 @@ const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading, isMob
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Selamat datang di Chat AI</h3>
-                  <p className="text-gray-500 dark:text-gray-400 mt-2">Mulai percakapan dengan mengirim pesan</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{t('welcome.title')}</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">{t('welcome.subtitle')}</p>
                 </div>
               </div>
             </div>
@@ -52,11 +61,15 @@ const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading, isMob
           )}
         </div>
       </div>
+
+      {/* Chat Input */}
       <ChatInput
         inputPesan={inputPesan}
         setInputPesan={setInputPesan}
         onSubmit={onSubmit}
         isLoading={isLoading}
+        isMobile={isMobile}
+        settings={settings}
       />
     </div>
   )

@@ -20,10 +20,19 @@ const useChatStore = create(
         })),
 
       deleteChat: (chatId) =>
-        set((state) => ({
-          chats: state.chats.filter((chat) => chat.id !== chatId),
-          activeChat: state.activeChat === chatId ? null : state.activeChat
-        })),
+        set((state) => {
+          const newChats = state.chats.filter((chat) => chat.id !== chatId)
+          return {
+            chats: newChats,
+            activeChat: state.activeChat === chatId ? (newChats.length > 0 ? newChats[0].id : null) : state.activeChat
+          }
+        }),
+
+      clearAllChats: () =>
+        set({
+          chats: [],
+          activeChat: null
+        }),
 
       addMessage: (chatId, message) =>
         set((state) => ({
@@ -42,7 +51,11 @@ const useChatStore = create(
       updateChatTitle: (chatId, title) =>
         set((state) => ({
           chats: state.chats.map((chat) =>
-            chat.id === chatId ? { ...chat, title } : chat
+            chat.id === chatId ? { 
+              ...chat, 
+              title,
+              titleKey: null // Hapus titleKey saat judul diubah manual
+            } : chat
           )
         })),
 
@@ -58,12 +71,13 @@ const useChatStore = create(
         return state.chats.find((chat) => chat.id === state.activeChat)
       },
 
-      createNewChat: () => {
+      createNewChat: (settings = { language: 'id' }) => {
         const newChat = {
           id: Date.now(),
-          title: 'Chat Baru',
+          titleKey: 'newChat',  
           messages: [],
           lastMessage: '',
+          isNewChat: true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         }

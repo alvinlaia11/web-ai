@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import ChatArea from './components/ChatArea'
 import Settings from './components/Settings'
 import AIService from './services/aiService'
+import useChatStore from './store/chatStore'
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -91,13 +92,8 @@ function App() {
   }
 
   const handleNewChat = () => {
-    const newChat = {
-      id: Date.now(),
-      title: 'Chat Baru',
-      lastMessage: '',
-      isNewChat: true,
-      messages: []
-    }
+    const chatStore = useChatStore.getState()
+    const newChat = chatStore.createNewChat(settings)
     setChatList(prev => [...prev, newChat])
     setActiveChatId(newChat.id)
     // Hanya tutup sidebar jika tidak dalam mode edit
@@ -105,13 +101,6 @@ function App() {
       setIsSidebarOpen(false)
     }
   }
-
-  // Jika tidak ada chat, buat chat baru
-  useEffect(() => {
-    if (chatList.length === 0) {
-      handleNewChat()
-    }
-  }, [chatList.length])
 
   const updateChatTitle = (chatId, newTitle) => {
     setChatList(prevList =>
@@ -122,20 +111,22 @@ function App() {
   }
 
   const handleDeleteChat = (chatId) => {
-    const newChatList = chatList.filter(chat => chat.id !== chatId)
+    const chatStore = useChatStore.getState()
+    chatStore.deleteChat(chatId)
     
-    // Update local storage and state
-    localStorage.setItem('chatList', JSON.stringify(newChatList))
-    setChatList(newChatList)
+    // Update local state
+    const updatedChatList = chatList.filter(chat => chat.id !== chatId)
+    setChatList(updatedChatList)
     
-    // If we're deleting the active chat, switch to the first available chat or null
+    // Update localStorage
+    localStorage.setItem('chatList', JSON.stringify(updatedChatList))
+    
+    // Update active chat
     if (chatId === activeChatId) {
-      const newActiveId = newChatList.length > 0 ? newChatList[0].id : null
-      setActiveChatId(newActiveId)
-      
-      // If there are no more chats, create a new one
-      if (newChatList.length === 0) {
-        handleNewChat()
+      if (updatedChatList.length > 0) {
+        setActiveChatId(updatedChatList[0].id)
+      } else {
+        setActiveChatId(null)
       }
     }
   }
@@ -153,13 +144,13 @@ function App() {
   const generateTitleFromMessage = async (message) => {
     try {
       const response = await AIService.sendMessage(
-        `Buatkan judul singkat (maksimal 6 kata) yang menggambarkan topik dari pesan berikut: "${message}"`,
+        `Buatkan judul singkat (maksimal 30 karakter) untuk percakapan ini berdasarkan pesan berikut: "${message}". Berikan judul saja tanpa tanda kutip atau karakter khusus.`,
         []
       )
       return response.trim()
     } catch (error) {
       console.error('Error generating title:', error)
-      return 'Chat Baru'
+      return message.slice(0, 30) + (message.length > 30 ? '...' : '')
     }
   }
 
@@ -172,42 +163,38 @@ function App() {
       setIsSidebarOpen(false)
     }
 
-    setIsLoading(true)
-    // Gunakan activeChat yang sudah dideklarasikan sebelumnya
-
     const userMessage = {
       id: Date.now(),
       pengirim: 'pengguna',
       teks: inputPesan,
     }
 
-    // Update pesan di chat yang aktif
+    // Update pesan di chat yang aktif dan ubah judul jika ini pesan pertama
     setChatList(prevList =>
       prevList.map(chat =>
         chat.id === activeChatId
-          ? { ...chat, messages: [...chat.messages, userMessage] }
+          ? { 
+              ...chat, 
+              messages: [...chat.messages, userMessage],
+              lastMessage: inputPesan,
+              // Jika ini pesan pertama dan chat masih berjudul "Chat Baru", gunakan pesan sebagai judul
+              title: chat.titleKey === 'newChat' && chat.messages.length === 0 
+                ? inputPesan.slice(0, 30) + (inputPesan.length > 30 ? '...' : '') 
+                : chat.title,
+              // Hapus titleKey jika ini pesan pertama
+              titleKey: chat.titleKey === 'newChat' && chat.messages.length === 0 ? null : chat.titleKey
+            }
           : chat
       )
     )
 
     setInputPesan('')
-    if (isMobile) setIsSidebarOpen(false)
-
-    // Generate title for new chat
-    if (activeChat?.isNewChat) {
-      const newTitle = await generateTitleFromMessage(inputPesan)
-      updateChatTitle(activeChatId, newTitle)
-      setChatList(prevList =>
-        prevList.map(chat =>
-          chat.id === activeChatId ? { ...chat, isNewChat: false } : chat
-        )
-      )
-    }
-
     setIsLoading(true)
+
     try {
+      const activeChat = chatList.find(chat => chat.id === activeChatId)
       const context = activeChat?.messages.map(msg => ({
-        role: msg.pengirim === 'pengguna' ? 'user' : 'model',
+        role: msg.pengirim === 'pengguna' ? 'user' : 'assistant',
         content: msg.teks
       })) || []
 
@@ -218,13 +205,12 @@ function App() {
         pengirim: 'ai',
         teks: aiResponse,
       }
-      
-      // Update pesan dan lastMessage di chat yang aktif
+
       setChatList(prevList =>
         prevList.map(chat =>
           chat.id === activeChatId
-            ? {
-                ...chat,
+            ? { 
+                ...chat, 
                 messages: [...chat.messages, aiMessage],
                 lastMessage: aiResponse
               }
@@ -238,6 +224,7 @@ function App() {
         pengirim: 'ai',
         teks: 'Maaf, terjadi kesalahan saat memproses pesan Anda. Silakan coba lagi.',
       }
+      
       setChatList(prevList =>
         prevList.map(chat =>
           chat.id === activeChatId
@@ -287,6 +274,18 @@ function App() {
     }
   }
 
+  const clearAllChats = () => {
+    const chatStore = useChatStore.getState()
+    chatStore.clearAllChats()
+    
+    // Update local state
+    setChatList([])
+    setActiveChatId(null)
+    
+    // Update localStorage
+    localStorage.setItem('chatList', JSON.stringify([]))
+  }
+
   return (
     <div className="fixed inset-0 flex bg-white dark:bg-gray-900" translate="no">
       {isMobile && isSidebarOpen && (
@@ -325,6 +324,7 @@ function App() {
           onUpdateTitle={updateChatTitle}
           onDeleteChat={handleDeleteChat}
           onClearHistory={clearChatHistory}
+          onClearAllChats={clearAllChats}
           onOpenSettings={() => setIsSettingsOpen(true)}
           settings={settings}
           onEditMode={handleEditMode}
@@ -358,12 +358,13 @@ function App() {
         </div>
 
         <ChatArea
-          pesan={activeChat ? activeChat.messages : []}
+          pesan={activeChat?.messages || []}
           inputPesan={inputPesan}
           setInputPesan={setInputPesan}
           onSubmit={handleSubmit}
           isLoading={isLoading}
           isMobile={isMobile}
+          settings={settings}
         />
       </main>
 
