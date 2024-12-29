@@ -1,8 +1,15 @@
 # Chat AI Assistant
 
-Aplikasi chat AI yang memungkinkan pengguna untuk berinteraksi dengan asisten AI dalam antarmuka yang modern dan responsif.
+Aplikasi chat AI yang memungkinkan pengguna untuk berinteraksi dengan asisten AI dalam antarmuka yang modern dan responsif. Menggunakan Google Gemini sebagai model AI untuk memberikan respons yang cerdas dan natural.
 
 ## Fitur Utama
+
+### Google Gemini AI
+- Model bahasa AI terbaru dari Google
+- Kemampuan memahami konteks yang lebih baik
+- Respons yang natural dan informatif
+- Dukungan multi-bahasa (Indonesia dan Inggris)
+- Dapat memahami dan merespons berbagai jenis pertanyaan
 
 ### Manajemen Chat
 - Buat chat baru dengan mudah
@@ -38,6 +45,7 @@ Aplikasi chat AI yang memungkinkan pengguna untuk berinteraksi dengan asisten AI
 
 ## Teknologi yang Digunakan
 
+- **AI Model**: Google Gemini
 - **Frontend**: React.js
 - **Styling**: Tailwind CSS
 - **State Management**: React Hooks
@@ -61,7 +69,15 @@ cd web-chat-ai
 npm install
 ```
 
-4. Jalankan aplikasi
+4. Konfigurasi API Key
+- Dapatkan API key dari [Google AI Studio](https://makersuite.google.com/app/apikey)
+- Buat file `.env` di root proyek
+- Tambahkan API key:
+```env
+VITE_GEMINI_API_KEY=your_api_key_here
+```
+
+5. Jalankan aplikasi
 ```bash
 npm run dev
 ```
@@ -96,6 +112,7 @@ Kami sangat menghargai kontribusi dari komunitas. Untuk berkontribusi:
 ## Catatan Rilis
 
 ### Versi 1.0.0
+- Integrasi dengan Google Gemini AI
 - Fitur chat dasar
 - Manajemen chat
 - Pengaturan tema dan bahasa
