@@ -36,6 +36,9 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [startY, setStartY] = useState(0)
 
+  // State untuk menandai mode edit global
+  const [isEditing, setIsEditing] = useState(false)
+
   // Simpan chat ke localStorage setiap kali berubah
   useEffect(() => {
     localStorage.setItem('chatList', JSON.stringify(chatList))
@@ -65,8 +68,10 @@ function App() {
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-      if (window.innerWidth < 768) {
+      const isMobileView = window.innerWidth < 768
+      setIsMobile(isMobileView)
+      // Hanya tutup sidebar jika tidak dalam mode edit
+      if (isMobileView && !isEditing) {
         setIsSidebarOpen(false)
       }
     }
@@ -74,7 +79,16 @@ function App() {
     checkIsMobile()
     window.addEventListener('resize', checkIsMobile)
     return () => window.removeEventListener('resize', checkIsMobile)
-  }, [])
+  }, [isEditing]) // Tambahkan isEditing sebagai dependency
+
+  // Fungsi untuk mengatur mode edit
+  const handleEditMode = (editing) => {
+    setIsEditing(editing)
+    // Jika mulai edit di mobile, buka sidebar
+    if (editing && isMobile) {
+      setIsSidebarOpen(true)
+    }
+  }
 
   const handleNewChat = () => {
     const newChat = {
@@ -86,7 +100,10 @@ function App() {
     }
     setChatList(prev => [...prev, newChat])
     setActiveChatId(newChat.id)
-    if (isMobile) setIsSidebarOpen(false)
+    // Hanya tutup sidebar jika tidak dalam mode edit
+    if (isMobile && !document.querySelector('.editing-mode')) {
+      setIsSidebarOpen(false)
+    }
   }
 
   // Jika tidak ada chat, buat chat baru
@@ -150,8 +167,8 @@ function App() {
     e.preventDefault()
     if (!inputPesan.trim() || isLoading) return
 
-    // Tutup sidebar di mobile saat mengirim pesan
-    if (isMobile) {
+    // Tutup sidebar di mobile hanya jika tidak dalam mode edit
+    if (isMobile && !document.querySelector('.editing-mode')) {
       setIsSidebarOpen(false)
     }
 
@@ -302,14 +319,15 @@ function App() {
           onNewChat={handleNewChat}
           isOpen={isSidebarOpen}
           isMobile={isMobile}
-          onClose={() => setIsSidebarOpen(false)}
+          onClose={() => !isEditing && setIsSidebarOpen(false)}
           activeChatId={activeChatId}
           setActiveChatId={handleChatSelect}
           onUpdateTitle={updateChatTitle}
           onDeleteChat={handleDeleteChat}
           onClearHistory={clearChatHistory}
-          onOpenSettings={toggleSettings}
+          onOpenSettings={() => setIsSettingsOpen(true)}
           settings={settings}
+          onEditMode={handleEditMode}
         />
       </div>
 
@@ -340,11 +358,12 @@ function App() {
         </div>
 
         <ChatArea
-          pesan={activeChat?.messages || []}
+          pesan={activeChat ? activeChat.messages : []}
           inputPesan={inputPesan}
           setInputPesan={setInputPesan}
           onSubmit={handleSubmit}
           isLoading={isLoading}
+          isMobile={isMobile}
         />
       </main>
 

@@ -14,7 +14,8 @@ const Sidebar = ({
   onDeleteChat,
   onClearHistory,
   onOpenSettings,
-  settings
+  settings,
+  onEditMode
 }) => {
   const { t } = useTranslation(settings?.language)
   const [searchQuery, setSearchQuery] = useState('')
@@ -28,6 +29,10 @@ const Sidebar = ({
       editInputRef.current.focus()
     }
   }, [editingChatId])
+
+  useEffect(() => {
+    onEditMode(editingChatId !== null)
+  }, [editingChatId, onEditMode])
 
   // Fungsi untuk membersihkan format Markdown
   const cleanMarkdown = (text) => {
@@ -50,21 +55,17 @@ const Sidebar = ({
     setEditTitle(chat.title)
   }
 
-  const handleSaveTitle = (forceClose = false) => {
+  const handleSaveTitle = () => {
     if (editTitle.trim()) {
       onUpdateTitle(editingChatId, editTitle.trim())
     }
     setEditingChatId(null)
-    // Hanya tutup sidebar jika diminta (misalnya dari tombol Enter)
-    if (forceClose && isMobile) {
-      onClose()
-    }
   }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      handleSaveTitle(true) // Tutup sidebar setelah Enter
+      handleSaveTitle()
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setEditingChatId(null)
@@ -72,20 +73,21 @@ const Sidebar = ({
   }
 
   const handleChatClick = (chatId) => {
-    // Jika sedang dalam mode edit, jangan lakukan apa-apa
+    // Jangan lakukan apa-apa jika sedang dalam mode edit
     if (editingChatId) {
       return
     }
     setActiveChatId(chatId)
-    if (isMobile) onClose()
+    if (isMobile) {
+      onClose()
+    }
   }
 
-  // Tambahkan handler untuk input blur
   const handleInputBlur = (e) => {
-    // Cek apakah blur karena klik di luar input atau karena keyboard hide
     const relatedTarget = e.relatedTarget
+    // Hanya simpan jika klik di luar area edit
     if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
-      handleSaveTitle(false) // Jangan tutup sidebar saat blur
+      handleSaveTitle()
     }
   }
 
@@ -162,7 +164,10 @@ const Sidebar = ({
                 }
               }}>
                 {editingChatId === chat.id ? (
-                  <div className="relative" onClick={e => e.stopPropagation()}>
+                  <div 
+                    className="relative editing-mode" 
+                    onClick={e => e.stopPropagation()}
+                  >
                     <input
                       ref={editInputRef}
                       type="text"

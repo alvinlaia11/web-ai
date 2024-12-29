@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 
-const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading }) => {
+const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading, isMobile }) => {
   const messagesEndRef = useRef(null)
   const chatContainerRef = useRef(null)
 
@@ -17,7 +17,7 @@ const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading }) => 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 px-4 py-4" ref={chatContainerRef}>
+      <div className={`flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 px-4 py-4 ${isMobile ? 'pb-safe-area' : ''}`} ref={chatContainerRef}>
         <div className="max-w-3xl mx-auto space-y-4">
           {pesan.length === 0 ? (
             <div className="h-full flex items-center justify-center">

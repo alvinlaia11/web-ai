@@ -1,19 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 
-const ChatInput = ({ inputPesan, setInputPesan, onSubmit, isLoading }) => {
+const ChatInput = ({ inputPesan, setInputPesan, onSubmit, isLoading, isMobile }) => {
   const [rows, setRows] = useState(1)
-  const [isMobile, setIsMobile] = useState(false)
   const textareaRef = useRef(null)
   const maxRows = isMobile ? 3 : 5 // Batasi baris di mobile
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   useEffect(() => {
     adjustTextareaHeight()
