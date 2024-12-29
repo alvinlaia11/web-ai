@@ -54,11 +54,16 @@ const Sidebar = ({
       onUpdateTitle(editingChatId, editTitle.trim())
     }
     setEditingChatId(null)
+    // Hanya tutup sidebar setelah selesai edit di mobile
+    if (isMobile) onClose()
   }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSaveTitle()
+    } else if (e.key === 'Escape') {
+      setEditingChatId(null)
+      if (isMobile) onClose()
     }
   }
 
@@ -73,6 +78,7 @@ const Sidebar = ({
   }
 
   const handleChatClick = (chatId) => {
+    // Jangan tutup sidebar dan jangan pindah chat jika sedang dalam mode edit
     if (!editingChatId) {
       setActiveChatId(chatId)
       if (isMobile) onClose()
@@ -136,7 +142,11 @@ const Sidebar = ({
               </div>
 
               {/* Content */}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0" onClick={(e) => {
+                if (editingChatId) {
+                  e.stopPropagation()
+                }
+              }}>
                 {editingChatId === chat.id ? (
                   <input
                     ref={editInputRef}
@@ -161,7 +171,7 @@ const Sidebar = ({
               </div>
 
               {/* Actions */}
-              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-x-1">
+              <div className={`flex-shrink-0 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200 space-x-1`}>
                 <button
                   onClick={(e) => handleEditClick(e, chat)}
                   className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
