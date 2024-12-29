@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatArea from './components/ChatArea'
 import Settings from './components/Settings'
-import DeleteConfirmation from './components/DeleteConfirmation'
 import AIService from './services/aiService'
 
 function App() {
@@ -34,7 +33,6 @@ function App() {
     return []
   })
 
-  const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, chatId: null })
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [startY, setStartY] = useState(0)
 
@@ -107,19 +105,22 @@ function App() {
   }
 
   const handleDeleteChat = (chatId) => {
-    setDeleteConfirmation({ isOpen: true, chatId })
-  }
-
-  const confirmDelete = () => {
-    const { chatId } = deleteConfirmation
     const newChatList = chatList.filter(chat => chat.id !== chatId)
+    
+    // Update local storage and state
+    localStorage.setItem('chatList', JSON.stringify(newChatList))
     setChatList(newChatList)
     
+    // If we're deleting the active chat, switch to the first available chat or null
     if (chatId === activeChatId) {
-      setActiveChatId(newChatList.length > 0 ? newChatList[0].id : null)
+      const newActiveId = newChatList.length > 0 ? newChatList[0].id : null
+      setActiveChatId(newActiveId)
+      
+      // If there are no more chats, create a new one
+      if (newChatList.length === 0) {
+        handleNewChat()
+      }
     }
-
-    setDeleteConfirmation({ isOpen: false, chatId: null })
   }
 
   const clearChatHistory = (chatId) => {
@@ -353,16 +354,6 @@ function App() {
         settings={settings}
         onUpdateSettings={setSettings}
         onClose={toggleSettings}
-      />
-
-      {/* Delete Confirmation */}
-      <DeleteConfirmation
-        isOpen={deleteConfirmation.isOpen}
-        onClose={() => setDeleteConfirmation({ ...deleteConfirmation, isOpen: false })}
-        onConfirm={() => {
-          handleConfirmDelete(deleteConfirmation.chatId)
-          setDeleteConfirmation({ ...deleteConfirmation, isOpen: false })
-        }}
       />
     </div>
   )
