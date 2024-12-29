@@ -21,6 +21,7 @@ const Sidebar = ({
   const [editingChatId, setEditingChatId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
+  const [editModal, setEditModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
   const editInputRef = useRef(null)
 
   // Reset editing state when sidebar closes
@@ -28,22 +29,22 @@ const Sidebar = ({
     if (!isOpen) {
       setEditingChatId(null)
       setEditTitle('')
+      setEditModal({ isOpen: false, chatId: null, chatTitle: '' })
     }
   }, [isOpen])
 
   useEffect(() => {
-    if (editingChatId && editInputRef.current) {
+    if (editingChatId && editInputRef.current && !isMobile) {
       editInputRef.current.focus()
     }
-  }, [editingChatId])
+  }, [editingChatId, isMobile])
 
-  // Fungsi untuk membersihkan format Markdown
   const cleanMarkdown = (text) => {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Hapus **bold**
-      .replace(/\*(.*?)\*/g, '$1')      // Hapus *italic*
-      .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // Hapus [link](url)
-      .replace(/`(.*?)`/g, '$1')        // Hapus `code`
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
+      .replace(/\`(.*?)\`/g, '$1')
   }
 
   const filteredChats = chatList.filter(chat => 
@@ -54,37 +55,24 @@ const Sidebar = ({
   const handleEditClick = (e, chat) => {
     e.preventDefault()
     e.stopPropagation()
-    setEditingChatId(chat.id)
-    setEditTitle(chat.title)
+    
+    if (isMobile) {
+      setEditModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title })
+    } else {
+      setEditingChatId(chat.id)
+      setEditTitle(chat.title)
+    }
   }
 
-  const handleSaveTitle = (e) => {
-    e?.preventDefault()
-    e?.stopPropagation()
-    
-    if (editTitle.trim()) {
-      onUpdateTitle(editingChatId, editTitle.trim())
+  const handleSaveTitle = (chatId, newTitle) => {
+    if (newTitle.trim()) {
+      onUpdateTitle(chatId, newTitle.trim())
     }
+    
+    // Reset states
     setEditingChatId(null)
     setEditTitle('')
-    
-    // Hanya tutup sidebar setelah selesai edit di mobile
-    if (isMobile) {
-      // Delay penutupan sidebar agar keyboard sempat hilang
-      setTimeout(() => onClose(), 100)
-    }
-  }
-
-  const handleKeyPress = (e) => {
-    e.stopPropagation()
-    if (e.key === 'Enter') {
-      handleSaveTitle(e)
-    }
-  }
-
-  const handleInputInteraction = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
+    setEditModal({ isOpen: false, chatId: null, chatTitle: '' })
   }
 
   const handleDeleteClick = (e, chat) => {
@@ -99,64 +87,53 @@ const Sidebar = ({
   }
 
   const handleChatClick = (chatId) => {
-    // Jangan tutup sidebar jika sedang dalam mode edit
     if (!editingChatId) {
       setActiveChatId(chatId)
       if (isMobile) onClose()
     }
   }
 
-  // Render mobile action buttons
-  const renderMobileActions = (chat) => {
-    if (!isMobile) return null;
+  // Mobile Edit Modal Component
+  const EditModal = () => {
+    const [localTitle, setLocalTitle] = useState(editModal.chatTitle)
     
-    return (
-      <div className="flex-shrink-0 flex items-center space-x-1">
-        <button
-          onClick={(e) => handleEditClick(e, chat)}
-          className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
-        <button
-          onClick={(e) => handleDeleteClick(e, chat)}
-          className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
-    );
-  };
+    if (!editModal.isOpen) return null
 
-  // Render desktop action buttons
-  const renderDesktopActions = (chat) => {
-    if (isMobile) return null;
-    
     return (
-      <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-x-1">
-        <button
-          onClick={(e) => handleEditClick(e, chat)}
-          className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
-        <button
-          onClick={(e) => handleDeleteClick(e, chat)}
-          className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              {t('sidebar.editChat')}
+            </h3>
+          </div>
+          <div className="p-4">
+            <input
+              type="text"
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end space-x-2 p-4 bg-gray-50 dark:bg-gray-700">
+            <button
+              onClick={() => setEditModal({ isOpen: false, chatId: null, chatTitle: '' })}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              onClick={() => handleSaveTitle(editModal.chatId, localTitle)}
+              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            >
+              {t('common.save')}
+            </button>
+          </div>
+        </div>
       </div>
-    );
-  };
+    )
+  }
 
   if (!isOpen) return null
 
@@ -201,54 +178,65 @@ const Sidebar = ({
             <div 
               key={chat.id}
               onClick={() => handleChatClick(chat.id)}
-              className={`group relative flex flex-col p-3 cursor-pointer transition-all duration-200 ${
+              className={`group relative flex items-center p-3 space-x-3 cursor-pointer transition-all duration-200 ${
                 activeChatId === chat.id 
                   ? 'bg-purple-50 dark:bg-purple-900/20' 
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              }`}
+              } rounded-lg`}
             >
-              <div className="flex items-center space-x-3">
-                {/* Avatar */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
-                  <span className="text-white font-medium">
-                    {chat.title.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+              {/* Avatar */}
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
+                <span className="text-white font-medium">
+                  {chat.title.charAt(0).toUpperCase()}
+                </span>
+              </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  {editingChatId === chat.id ? (
-                    <form onSubmit={handleSaveTitle} onClick={handleInputInteraction}>
-                      <input
-                        ref={editInputRef}
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => {
-                          e.stopPropagation()
-                          setEditTitle(e.target.value)
-                        }}
-                        onBlur={handleSaveTitle}
-                        onKeyPress={handleKeyPress}
-                        onFocus={handleInputInteraction}
-                        onClick={handleInputInteraction}
-                        className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                        autoFocus
-                      />
-                    </form>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {chat.title}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {cleanMarkdown(chat.lastMessage)}
-                      </p>
-                    </>
-                  )}
-                </div>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                {editingChatId === chat.id && !isMobile ? (
+                  <form onSubmit={(e) => {
+                    e.preventDefault()
+                    handleSaveTitle(chat.id, editTitle)
+                  }}>
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                      autoFocus
+                    />
+                  </form>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {chat.title}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {cleanMarkdown(chat.lastMessage)}
+                    </p>
+                  </>
+                )}
+              </div>
 
-                {/* Render actions based on device type */}
-                {isMobile ? renderMobileActions(chat) : renderDesktopActions(chat)}
+              {/* Actions */}
+              <div className={`flex-shrink-0 flex items-center space-x-1 ${!isMobile && 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
+                <button
+                  onClick={(e) => handleEditClick(e, chat)}
+                  className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => handleDeleteClick(e, chat)}
+                  className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             </div>
           ))}
@@ -267,6 +255,9 @@ const Sidebar = ({
           </button>
         </div>
       </div>
+
+      {/* Edit Modal for Mobile */}
+      <EditModal />
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
