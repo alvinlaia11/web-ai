@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Gradient Background -->
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#8B5CF6"/>
+            <stop offset="100%" style="stop-color:#6366F1"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Main Circle -->
+    <circle cx="256" cy="256" r="248" fill="url(#gradient)" stroke="white" stroke-width="16"/>
+    
+    <!-- Chat Bubble -->
+    <path d="M346 186C346 170.536 333.464 158 318 158H194C178.536 158 166 170.536 166 186V266C166 281.464 178.536 294 194 294H278L326 342V294H346V186Z" fill="white"/>
+    
+    <!-- AI Text -->
+    <path d="M236 208H220V272H236V208ZM292 208H276V272H292V208ZM264 208H248V272H264V208Z" fill="url(#gradient)"/>
+</svg>

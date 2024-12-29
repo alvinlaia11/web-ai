@@ -41,8 +41,14 @@ function App() {
   // Simpan settings ke localStorage
   useEffect(() => {
     localStorage.setItem('settings', JSON.stringify(settings))
-    // Terapkan tema
-    document.documentElement.classList.toggle('light', settings.theme === 'light')
+    // Terapkan tema dengan benar menggunakan class 'dark'
+    if (settings.theme === 'dark') {
+      document.documentElement.classList.add('dark')
+      document.documentElement.classList.remove('light')
+    } else {
+      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.add('light')
+    }
     // Terapkan ukuran font
     document.documentElement.style.fontSize = {
       small: '14px',
@@ -53,7 +59,7 @@ function App() {
 
   // Mendapatkan pesan dari chat yang aktif
   const activeChat = chatList.find(chat => chat.id === activeChatId)
-  const pesan = activeChat?.messages || []
+  const [pesan, setPesan] = useState(activeChat?.messages || [])
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -96,19 +102,15 @@ function App() {
     )
   }
 
-  const deleteChat = (chatId) => {
-    setChatList(prevList => {
-      const newList = prevList.filter(chat => chat.id !== chatId)
-      // Jika menghapus chat yang aktif, pilih chat pertama atau buat baru
-      if (activeChatId === chatId) {
-        if (newList.length > 0) {
-          setActiveChatId(newList[0].id)
-        } else {
-          handleNewChat()
-        }
-      }
-      return newList
-    })
+  const handleDeleteChat = (chatId) => {
+    const newChatList = chatList.filter(chat => chat.id !== chatId)
+    setChatList(newChatList)
+    
+    // Jika chat yang dihapus adalah chat yang aktif
+    if (chatId === activeChatId) {
+      // Set chat aktif ke chat pertama dalam list baru jika ada
+      setActiveChatId(newChatList.length > 0 ? newChatList[0].id : null)
+    }
   }
 
   const clearChatHistory = (chatId) => {
@@ -195,6 +197,7 @@ function App() {
             : chat
         )
       )
+      setPesan(prevPesan => [...prevPesan, aiMessage])
     } catch (error) {
       console.error('Error saat berkomunikasi dengan AI:', error)
       const errorMessage = {
@@ -209,6 +212,7 @@ function App() {
             : chat
         )
       )
+      setPesan(prevPesan => [...prevPesan, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -223,7 +227,7 @@ function App() {
   }
 
   return (
-    <div className="fixed inset-0 flex w-full min-h-screen overflow-hidden touch-none">
+    <div className="fixed inset-0 flex bg-white dark:bg-gray-900">
       {isMobile && isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 touch-none"
@@ -231,14 +235,15 @@ function App() {
         />
       )}
 
+      {/* Sidebar Container */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
+        className={`${
           isMobile
             ? 'fixed inset-y-0 left-0 z-30'
             : 'relative'
         } flex-shrink-0 ${
-          isSidebarOpen ? 'w-80' : 'w-0'
-        } overflow-hidden`}
+          isSidebarOpen ? 'w-64' : 'w-0'
+        } transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-200 dark:border-gray-700`}
       >
         <Sidebar
           chatList={chatList}
@@ -249,23 +254,22 @@ function App() {
           activeChatId={activeChatId}
           setActiveChatId={setActiveChatId}
           onUpdateTitle={updateChatTitle}
-          onDeleteChat={deleteChat}
+          onDeleteChat={handleDeleteChat}
           onClearHistory={clearChatHistory}
           onOpenSettings={toggleSettings}
         />
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gradient-to-b dark:from-gray-800 dark:to-gray-900 overflow-hidden">
-        <div className="h-12 bg-white dark:bg-gray-800/50 backdrop-blur-lg flex items-center px-4">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900">
+        <div className="h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4">
           <button
             onClick={toggleSidebar}
-            className="p-2 bg-gray-100 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600/50 rounded-lg transition-colors"
+            className="p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className={`h-6 w-6 text-gray-600 dark:text-gray-400 transition-transform duration-300 ${
-                isSidebarOpen && !isMobile ? 'rotate-0' : 'rotate-180'
-              }`}
+              className="h-6 w-6 transition-transform duration-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -283,6 +287,7 @@ function App() {
 
         <ChatArea
           pesan={pesan}
+          setPesan={setPesan}
           inputPesan={inputPesan}
           setInputPesan={setInputPesan}
           onSubmit={handleSubmit}

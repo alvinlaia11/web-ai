@@ -2,8 +2,18 @@ import React, { useState, useRef, useEffect } from 'react'
 
 const ChatInput = ({ inputPesan, setInputPesan, onSubmit, isLoading }) => {
   const [rows, setRows] = useState(1)
+  const [isMobile, setIsMobile] = useState(false)
   const textareaRef = useRef(null)
-  const maxRows = 5
+  const maxRows = isMobile ? 3 : 5 // Batasi baris di mobile
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     adjustTextareaHeight()
@@ -14,12 +24,13 @@ const ChatInput = ({ inputPesan, setInputPesan, onSubmit, isLoading }) => {
     if (!textarea) return
 
     textarea.style.height = 'auto'
+    const lineHeight = isMobile ? 20 : 24 // Lebih kecil di mobile
     const newRows = Math.min(
-      Math.max(Math.ceil(textarea.scrollHeight / 24), 1),
+      Math.max(Math.ceil(textarea.scrollHeight / lineHeight), 1),
       maxRows
     )
     setRows(newRows)
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 24 * maxRows)}px`
+    textarea.style.height = `${Math.min(textarea.scrollHeight, lineHeight * maxRows)}px`
   }
 
   const handleKeyDown = (e) => {
@@ -31,53 +42,53 @@ const ChatInput = ({ inputPesan, setInputPesan, onSubmit, isLoading }) => {
     }
   }
 
+  const handleFocus = () => {
+    if (isMobile) {
+      // Scroll ke textarea setelah delay kecil untuk memastikan keyboard sudah muncul
+      setTimeout(() => {
+        textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 300)
+    }
+  }
+
   return (
-    <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+    <div className={`p-2 sm:p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 ${isMobile ? 'pb-4' : ''}`}>
       <div className="max-w-3xl mx-auto">
-        <div className="relative flex items-end bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm">
+        <div className="relative flex items-center bg-gray-50 dark:bg-gray-800 rounded-2xl shadow-sm">
           <textarea
             ref={textareaRef}
             rows={rows}
             value={inputPesan}
             onChange={(e) => setInputPesan(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
             placeholder="Ketik pesan Anda..."
-            className="block w-full resize-none bg-transparent py-3 pl-4 pr-16 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-0 focus:outline-none text-base"
+            className={`block w-full resize-none bg-transparent py-2.5 sm:py-3 pl-3 sm:pl-4 pr-12 sm:pr-16 
+              text-gray-900 dark:text-white placeholder-gray-500 focus:ring-0 focus:outline-none 
+              ${isMobile ? 'text-sm' : 'text-base'}`}
             style={{
-              minHeight: '48px',
-              maxHeight: `${24 * maxRows}px`
+              minHeight: isMobile ? '40px' : '48px',
+              maxHeight: `${(isMobile ? 20 : 24) * maxRows}px`,
+              lineHeight: isMobile ? '20px' : '24px'
             }}
           />
-          <div className="absolute right-2 bottom-2 flex space-x-2">
+          <div className={`absolute ${isMobile ? 'right-1.5' : 'right-2'} flex items-center h-full pr-1`}>
             <button
-              onClick={(e) => {
-                e.preventDefault()
-                if (!isLoading && inputPesan.trim()) {
-                  onSubmit(e)
-                }
-              }}
+              onClick={onSubmit}
               disabled={isLoading || !inputPesan.trim()}
-              className={`rounded-xl p-2 ${
-                isLoading || !inputPesan.trim()
-                  ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
-                  : 'text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 transform hover:scale-105 transition-all'
-              }`}
+              className={`p-2 rounded-xl bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed
+                flex items-center justify-center ${isMobile ? 'text-sm' : 'text-base'}`}
+              style={{
+                height: isMobile ? '32px' : '40px',
+                width: isMobile ? '32px' : '40px'
+              }}
             >
-              {isLoading ? (
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transform rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                </svg>
-              )}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" 
+                className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`}>
+                <path d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
+              </svg>
             </button>
           </div>
-        </div>
-        <div className="mt-2 text-xs text-center text-gray-500 dark:text-gray-400">
-          Tekan Enter untuk mengirim, Shift + Enter untuk baris baru
         </div>
       </div>
     </div>
