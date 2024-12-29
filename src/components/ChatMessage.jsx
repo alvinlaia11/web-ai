@@ -1,49 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 
-const ChatMessage = ({ message, onEdit, onDelete }) => {
+const ChatMessage = ({ message }) => {
   const isAI = message.pengirim === 'ai'
-  const [showMenu, setShowMenu] = useState(false)
-  const menuRef = useRef(null)
   const messageRef = useRef(null)
-
-  // Handle long press
-  let timeoutId = null
-  const longPressTime = 500 // 500ms untuk long press
-
-  const handleTouchStart = (e) => {
-    timeoutId = setTimeout(() => {
-      setShowMenu(true)
-    }, longPressTime)
-  }
-
-  const handleTouchEnd = () => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
-    }
-  }
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   return (
     <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} mb-4 relative`} ref={messageRef}>
       <div 
         className={`flex items-start space-x-3 max-w-[80%] ${isAI ? 'flex-row' : 'flex-row-reverse space-x-reverse'}`}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          setShowMenu(true)
-        }}
       >
         <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
           isAI 
@@ -83,33 +48,6 @@ const ChatMessage = ({ message, onEdit, onDelete }) => {
           </ReactMarkdown>
         </div>
       </div>
-
-      {/* Context Menu */}
-      {showMenu && !isAI && (
-        <div 
-          ref={menuRef}
-          className="absolute bottom-full mb-2 right-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 min-w-[120px]"
-        >
-          <button
-            onClick={() => {
-              onEdit(message)
-              setShowMenu(false)
-            }}
-            className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Edit
-          </button>
-          <button
-            onClick={() => {
-              onDelete(message)
-              setShowMenu(false)
-            }}
-            className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Hapus
-          </button>
-        </div>
-      )}
     </div>
   )
 }
