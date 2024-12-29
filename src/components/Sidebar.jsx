@@ -52,6 +52,7 @@ const Sidebar = ({
   )
 
   const handleEditClick = (e, chat) => {
+    e.preventDefault()
     e.stopPropagation()
     setEditingChatId(chat.id)
     setEditTitle(chat.title)
@@ -66,6 +67,12 @@ const Sidebar = ({
     }
     setEditingChatId(null)
     setEditTitle('')
+    
+    // Hanya tutup sidebar setelah selesai edit di mobile
+    if (isMobile) {
+      // Delay penutupan sidebar agar keyboard sempat hilang
+      setTimeout(() => onClose(), 100)
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -73,6 +80,11 @@ const Sidebar = ({
     if (e.key === 'Enter') {
       handleSaveTitle(e)
     }
+  }
+
+  const handleInputInteraction = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
   }
 
   const handleDeleteClick = (e, chat) => {
@@ -206,14 +218,19 @@ const Sidebar = ({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {editingChatId === chat.id ? (
-                    <form onSubmit={handleSaveTitle}>
+                    <form onSubmit={handleSaveTitle} onClick={handleInputInteraction}>
                       <input
                         ref={editInputRef}
                         type="text"
                         value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onBlur={(e) => handleSaveTitle(e)}
+                        onChange={(e) => {
+                          e.stopPropagation()
+                          setEditTitle(e.target.value)
+                        }}
+                        onBlur={handleSaveTitle}
                         onKeyPress={handleKeyPress}
+                        onFocus={handleInputInteraction}
+                        onClick={handleInputInteraction}
                         className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
                         autoFocus
                       />
