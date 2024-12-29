@@ -57,7 +57,10 @@ const Sidebar = ({
     e.stopPropagation()
     
     if (isMobile) {
-      setEditModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title })
+      // Hentikan event bubbling dan tunda pembukaan modal
+      setTimeout(() => {
+        setEditModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title });
+      }, 100);
     } else {
       setEditingChatId(chat.id)
       setEditTitle(chat.title)
@@ -95,36 +98,58 @@ const Sidebar = ({
 
   // Mobile Edit Modal Component
   const EditModal = () => {
-    const [localTitle, setLocalTitle] = useState(editModal.chatTitle)
+    const [localTitle, setLocalTitle] = useState(editModal.chatTitle);
     
-    if (!editModal.isOpen) return null
+    if (!editModal.isOpen) return null;
+
+    const handleModalClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        onClick={handleModalClick}
+      >
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden" 
+          onClick={handleModalClick}
+        >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {t('sidebar.editChat')}
             </h3>
           </div>
-          <div className="p-4">
+          <div className="p-4" onClick={handleModalClick}>
             <input
               type="text"
               value={localTitle}
-              onChange={(e) => setLocalTitle(e.target.value)}
+              onChange={(e) => {
+                e.stopPropagation();
+                setLocalTitle(e.target.value);
+              }}
+              onClick={handleModalClick}
+              onFocus={handleModalClick}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
               autoFocus
             />
           </div>
           <div className="flex justify-end space-x-2 p-4 bg-gray-50 dark:bg-gray-700">
             <button
-              onClick={() => setEditModal({ isOpen: false, chatId: null, chatTitle: '' })}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditModal({ isOpen: false, chatId: null, chatTitle: '' });
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
             >
               {t('common.cancel')}
             </button>
             <button
-              onClick={() => handleSaveTitle(editModal.chatId, localTitle)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSaveTitle(editModal.chatId, localTitle);
+              }}
               className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
             >
               {t('common.save')}
@@ -132,8 +157,8 @@ const Sidebar = ({
           </div>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   if (!isOpen) return null
 
@@ -143,7 +168,8 @@ const Sidebar = ({
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               onNewChat()
               if (isMobile) onClose()
             }}
@@ -163,7 +189,10 @@ const Sidebar = ({
               type="text"
               placeholder={t('sidebar.searchPlaceholder')}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                e.stopPropagation();
+                setSearchQuery(e.target.value)
+              }}
               className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-2.5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
@@ -177,7 +206,10 @@ const Sidebar = ({
           {filteredChats.map(chat => (
             <div 
               key={chat.id}
-              onClick={() => handleChatClick(chat.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleChatClick(chat.id)
+              }}
               className={`group relative flex items-center p-3 space-x-3 cursor-pointer transition-all duration-200 ${
                 activeChatId === chat.id 
                   ? 'bg-purple-50 dark:bg-purple-900/20' 
@@ -202,7 +234,10 @@ const Sidebar = ({
                       ref={editInputRef}
                       type="text"
                       value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setEditTitle(e.target.value)
+                      }}
                       className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
                       autoFocus
                     />
@@ -222,7 +257,10 @@ const Sidebar = ({
               {/* Actions */}
               <div className={`flex-shrink-0 flex items-center space-x-1 ${!isMobile && 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
                 <button
-                  onClick={(e) => handleEditClick(e, chat)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick(e, chat)
+                  }}
                   className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +268,10 @@ const Sidebar = ({
                   </svg>
                 </button>
                 <button
-                  onClick={(e) => handleDeleteClick(e, chat)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(e, chat)
+                  }}
                   className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,7 +286,10 @@ const Sidebar = ({
         {/* Settings Button */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={onOpenSettings}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenSettings()
+            }}
             className="w-full flex items-center justify-center space-x-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -262,7 +306,10 @@ const Sidebar = ({
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })}
+        onClose={(e) => {
+          e.stopPropagation();
+          setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
+        }}
         onConfirm={handleConfirmDelete}
         chatTitle={deleteModal.chatTitle}
       />
