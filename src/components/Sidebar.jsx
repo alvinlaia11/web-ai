@@ -44,26 +44,48 @@ const Sidebar = ({
   )
 
   const handleEditClick = (e, chat) => {
+    e.preventDefault()
     e.stopPropagation()
     setEditingChatId(chat.id)
     setEditTitle(chat.title)
   }
 
-  const handleSaveTitle = () => {
+  const handleSaveTitle = (forceClose = false) => {
     if (editTitle.trim()) {
       onUpdateTitle(editingChatId, editTitle.trim())
     }
     setEditingChatId(null)
-    // Hanya tutup sidebar setelah selesai edit di mobile
-    if (isMobile) onClose()
+    // Hanya tutup sidebar jika diminta (misalnya dari tombol Enter)
+    if (forceClose && isMobile) {
+      onClose()
+    }
   }
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      handleSaveTitle()
+      e.preventDefault()
+      handleSaveTitle(true) // Tutup sidebar setelah Enter
     } else if (e.key === 'Escape') {
+      e.preventDefault()
       setEditingChatId(null)
-      if (isMobile) onClose()
+    }
+  }
+
+  const handleChatClick = (chatId) => {
+    // Jika sedang dalam mode edit, jangan lakukan apa-apa
+    if (editingChatId) {
+      return
+    }
+    setActiveChatId(chatId)
+    if (isMobile) onClose()
+  }
+
+  // Tambahkan handler untuk input blur
+  const handleInputBlur = (e) => {
+    // Cek apakah blur karena klik di luar input atau karena keyboard hide
+    const relatedTarget = e.relatedTarget
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      handleSaveTitle(false) // Jangan tutup sidebar saat blur
     }
   }
 
@@ -75,14 +97,6 @@ const Sidebar = ({
   const handleConfirmDelete = () => {
     onDeleteChat(deleteConfirmation.chatId)
     setDeleteConfirmation({ isOpen: false, chatId: null })
-  }
-
-  const handleChatClick = (chatId) => {
-    // Jangan tutup sidebar dan jangan pindah chat jika sedang dalam mode edit
-    if (!editingChatId) {
-      setActiveChatId(chatId)
-      if (isMobile) onClose()
-    }
   }
 
   if (!isOpen) return null
@@ -148,16 +162,18 @@ const Sidebar = ({
                 }
               }}>
                 {editingChatId === chat.id ? (
-                  <input
-                    ref={editInputRef}
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    onBlur={handleSaveTitle}
-                    onKeyPress={handleKeyPress}
-                    className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                    autoFocus
-                  />
+                  <div className="relative" onClick={e => e.stopPropagation()}>
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={handleInputBlur}
+                      onKeyDown={handleKeyPress}
+                      className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                      autoFocus
+                    />
+                  </div>
                 ) : (
                   <>
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
