@@ -1,105 +1,90 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 
-const Settings = ({ isOpen, onClose, settings, onUpdateSettings }) => {
-  useEffect(() => {
-    if (settings.theme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [settings.theme])
-
+const Settings = ({ isOpen, settings, onUpdateSettings, onClose }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md overflow-hidden shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white dark:bg-gray-800 w-full sm:rounded-lg shadow-xl sm:max-w-md">
         {/* Header */}
-        <div className="border-b border-gray-200 dark:border-gray-700/50 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Pengaturan</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            Pengaturan
+          </h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800"
+            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
 
-        {/* Settings Content */}
+        {/* Content */}
         <div className="p-4 space-y-6">
-          {/* Theme Setting */}
+          {/* Theme */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tema</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tema
+            </label>
             <select
               value={settings.theme}
               onChange={(e) => onUpdateSettings({ ...settings, theme: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
-              <option value="dark">Dark Mode</option>
-              <option value="light">Light Mode</option>
+              <option value="light">Terang</option>
+              <option value="dark">Gelap</option>
+              <option value="system">Sistem</option>
             </select>
           </div>
 
-          {/* Language Setting */}
+          {/* Language */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bahasa AI</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Bahasa
+            </label>
             <select
               value={settings.language}
               onChange={(e) => onUpdateSettings({ ...settings, language: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
-              <option value="id">Bahasa Indonesia</option>
+              <option value="id">Indonesia</option>
               <option value="en">English</option>
             </select>
           </div>
 
-          {/* Font Size Setting */}
+          {/* Font Size */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ukuran Teks</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Ukuran Font
+            </label>
             <select
               value={settings.fontSize}
               onChange={(e) => onUpdateSettings({ ...settings, fontSize: e.target.value })}
-              className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="small">Kecil</option>
               <option value="medium">Sedang</option>
               <option value="large">Besar</option>
             </select>
           </div>
+        </div>
 
-          {/* Export Button */}
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={() => {
-              const chatHistory = localStorage.getItem('chatList')
-              const blob = new Blob([chatHistory], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = 'chat-history.json'
-              document.body.appendChild(a)
-              a.click()
-              document.body.removeChild(a)
-              URL.revokeObjectURL(url)
-            }}
-            className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 font-medium transition-colors"
+            onClick={onClose}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-            <span>Export Riwayat Chat</span>
+            Selesai
           </button>
         </div>
       </div>

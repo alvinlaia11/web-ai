@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatArea from './components/ChatArea'
 import Settings from './components/Settings'
+import DeleteConfirmation from './components/DeleteConfirmation'
 import AIService from './services/aiService'
 
 function App() {
@@ -33,6 +34,8 @@ function App() {
     return []
   })
 
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, chatId: null })
+
   // Simpan chat ke localStorage setiap kali berubah
   useEffect(() => {
     localStorage.setItem('chatList', JSON.stringify(chatList))
@@ -59,7 +62,6 @@ function App() {
 
   // Mendapatkan pesan dari chat yang aktif
   const activeChat = chatList.find(chat => chat.id === activeChatId)
-  const [pesan, setPesan] = useState(activeChat?.messages || [])
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -103,14 +105,19 @@ function App() {
   }
 
   const handleDeleteChat = (chatId) => {
+    setDeleteConfirmation({ isOpen: true, chatId })
+  }
+
+  const confirmDelete = () => {
+    const { chatId } = deleteConfirmation
     const newChatList = chatList.filter(chat => chat.id !== chatId)
     setChatList(newChatList)
     
-    // Jika chat yang dihapus adalah chat yang aktif
     if (chatId === activeChatId) {
-      // Set chat aktif ke chat pertama dalam list baru jika ada
       setActiveChatId(newChatList.length > 0 ? newChatList[0].id : null)
     }
+
+    setDeleteConfirmation({ isOpen: false, chatId: null })
   }
 
   const clearChatHistory = (chatId) => {
@@ -172,10 +179,10 @@ function App() {
 
     setIsLoading(true)
     try {
-      const context = pesan.map(msg => ({
+      const context = activeChat?.messages.map(msg => ({
         role: msg.pengirim === 'pengguna' ? 'user' : 'model',
         content: msg.teks
-      }))
+      })) || []
 
       const aiResponse = await AIService.sendMessage(inputPesan, context)
       
@@ -197,7 +204,6 @@ function App() {
             : chat
         )
       )
-      setPesan(prevPesan => [...prevPesan, aiMessage])
     } catch (error) {
       console.error('Error saat berkomunikasi dengan AI:', error)
       const errorMessage = {
@@ -212,7 +218,6 @@ function App() {
             : chat
         )
       )
-      setPesan(prevPesan => [...prevPesan, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -278,7 +283,7 @@ function App() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d={isMobile ? "M4 6h16M4 12h16M4 18h16" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"}
+                d={isSidebarOpen ? "M4 6h16M4 12h16M4 18h16" : "M11 19l-7-7 7-7m8 14l-7-7 7-7"}
               />
             </svg>
           </button>
@@ -286,8 +291,7 @@ function App() {
         </div>
 
         <ChatArea
-          pesan={pesan}
-          setPesan={setPesan}
+          pesan={activeChatId ? chatList.find(chat => chat.id === activeChatId)?.messages || [] : []}
           inputPesan={inputPesan}
           setInputPesan={setInputPesan}
           onSubmit={handleSubmit}
@@ -300,9 +304,16 @@ function App() {
           isOpen={isSettingsOpen}
           settings={settings}
           onUpdateSettings={setSettings}
-          onClose={toggleSettings}
+          onClose={() => setIsSettingsOpen(false)}
         />
       )}
+
+      <DeleteConfirmation
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, chatId: null })}
+        onConfirm={confirmDelete}
+        title="Hapus Chat"
+      />
     </div>
   )
 }
