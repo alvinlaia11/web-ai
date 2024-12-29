@@ -2,68 +2,6 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 
-// EditModal Component
-const EditModal = ({ isOpen, initialTitle, onSave, onCancel, t }) => {
-  const [localTitle, setLocalTitle] = useState(initialTitle);
-
-  useEffect(() => {
-    setLocalTitle(initialTitle);
-  }, [initialTitle]);
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    if (localTitle.trim()) {
-      onSave(localTitle.trim());
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div 
-        className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {t('sidebar.editChat')}
-          </h3>
-        </div>
-        <form onSubmit={handleSave}>
-          <div className="p-4">
-            <input
-              type="text"
-              value={localTitle}
-              onChange={(e) => setLocalTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-              autoFocus
-            />
-          </div>
-          <div className="flex justify-end space-x-2 p-4 bg-gray-50 dark:bg-gray-700">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-            >
-              {t('actions.cancel')}
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
-            >
-              {t('actions.save')}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 const Sidebar = ({ 
   chatList, 
   onNewChat, 
@@ -83,30 +21,21 @@ const Sidebar = ({
   const [editingChatId, setEditingChatId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
-  const [editModal, setEditModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
   const editInputRef = useRef(null)
 
-  // Reset editing state when sidebar closes
   useEffect(() => {
-    if (!isOpen) {
-      setEditingChatId(null)
-      setEditTitle('')
-      setEditModal({ isOpen: false, chatId: null, chatTitle: '' })
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    if (editingChatId && editInputRef.current && !isMobile) {
+    if (editingChatId && editInputRef.current) {
       editInputRef.current.focus()
     }
-  }, [editingChatId, isMobile])
+  }, [editingChatId])
 
+  // Fungsi untuk membersihkan format Markdown
   const cleanMarkdown = (text) => {
     return text
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-      .replace(/\`(.*?)\`/g, '$1')
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Hapus **bold**
+      .replace(/\*(.*?)\*/g, '$1')      // Hapus *italic*
+      .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // Hapus [link](url)
+      .replace(/`(.*?)`/g, '$1')        // Hapus `code`
   }
 
   const filteredChats = chatList.filter(chat => 
@@ -115,37 +44,32 @@ const Sidebar = ({
   )
 
   const handleEditClick = (e, chat) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (isMobile) {
-      setEditModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title });
-    } else {
-      setEditingChatId(chat.id);
-      setEditTitle(chat.title);
+    e.stopPropagation()
+    setEditingChatId(chat.id)
+    setEditTitle(chat.title)
+  }
+
+  const handleSaveTitle = () => {
+    if (editTitle.trim()) {
+      onUpdateTitle(editingChatId, editTitle.trim())
     }
-  };
+    setEditingChatId(null)
+  }
 
-  const handleSaveTitle = (chatId, newTitle) => {
-    if (newTitle.trim()) {
-      onUpdateTitle(chatId, newTitle.trim());
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSaveTitle()
     }
-    setEditingChatId(null);
-    setEditTitle('');
-    setEditModal({ isOpen: false, chatId: null, chatTitle: '' });
-  };
-
-  const handleModalSave = (newTitle) => {
-    handleSaveTitle(editModal.chatId, newTitle);
-  };
-
-  const handleModalCancel = () => {
-    setEditModal({ isOpen: false, chatId: null, chatTitle: '' });
-  };
+  }
 
   const handleDeleteClick = (e, chat) => {
     e.stopPropagation()
     setDeleteModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title })
+  }
+
+  const handleConfirmDelete = () => {
+    onDeleteChat(deleteModal.chatId)
+    setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
   }
 
   const handleChatClick = (chatId) => {
@@ -163,8 +87,7 @@ const Sidebar = ({
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               onNewChat()
               if (isMobile) onClose()
             }}
@@ -184,10 +107,7 @@ const Sidebar = ({
               type="text"
               placeholder={t('sidebar.searchPlaceholder')}
               value={searchQuery}
-              onChange={(e) => {
-                e.stopPropagation();
-                setSearchQuery(e.target.value)
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-2.5 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor">
@@ -201,15 +121,12 @@ const Sidebar = ({
           {filteredChats.map(chat => (
             <div 
               key={chat.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleChatClick(chat.id)
-              }}
+              onClick={() => handleChatClick(chat.id)}
               className={`group relative flex items-center p-3 space-x-3 cursor-pointer transition-all duration-200 ${
                 activeChatId === chat.id 
                   ? 'bg-purple-50 dark:bg-purple-900/20' 
                   : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-              } rounded-lg`}
+              }`}
             >
               {/* Avatar */}
               <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
@@ -220,23 +137,17 @@ const Sidebar = ({
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                {editingChatId === chat.id && !isMobile ? (
-                  <form onSubmit={(e) => {
-                    e.preventDefault()
-                    handleSaveTitle(chat.id, editTitle)
-                  }}>
-                    <input
-                      ref={editInputRef}
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setEditTitle(e.target.value)
-                      }}
-                      className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                      autoFocus
-                    />
-                  </form>
+                {editingChatId === chat.id ? (
+                  <input
+                    ref={editInputRef}
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={handleSaveTitle}
+                    onKeyPress={handleKeyPress}
+                    className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
+                    autoFocus
+                  />
                 ) : (
                   <>
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -250,12 +161,9 @@ const Sidebar = ({
               </div>
 
               {/* Actions */}
-              <div className={`flex-shrink-0 flex items-center space-x-1 ${!isMobile && 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200`}>
+              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-x-1">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditClick(e, chat)
-                  }}
+                  onClick={(e) => handleEditClick(e, chat)}
                   className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,10 +171,7 @@ const Sidebar = ({
                   </svg>
                 </button>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteClick(e, chat)
-                  }}
+                  onClick={(e) => handleDeleteClick(e, chat)}
                   className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,10 +186,7 @@ const Sidebar = ({
         {/* Settings Button */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenSettings()
-            }}
+            onClick={onOpenSettings}
             className="w-full flex items-center justify-center space-x-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -298,25 +200,9 @@ const Sidebar = ({
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={deleteModal.isOpen}
-        onClose={(e) => {
-          e.stopPropagation();
-          setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
-        }}
-        onConfirm={() => {
-          onDeleteChat(deleteModal.chatId)
-          setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
-          if (isMobile) onClose()
-        }}
+        onClose={() => setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })}
+        onConfirm={handleConfirmDelete}
         chatTitle={deleteModal.chatTitle}
-      />
-
-      {/* Edit Modal */}
-      <EditModal
-        isOpen={editModal.isOpen}
-        initialTitle={editModal.chatTitle}
-        onSave={handleModalSave}
-        onCancel={handleModalCancel}
-        t={t}
       />
     </>
   )
