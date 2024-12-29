@@ -288,7 +288,7 @@ function App() {
   }
 
   return (
-    <div className="fixed inset-0 flex bg-white dark:bg-gray-900">
+    <div className="fixed inset-0 flex bg-white dark:bg-gray-900" translate="no">
       {isMobile && isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 touch-none"
