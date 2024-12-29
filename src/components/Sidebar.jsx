@@ -2,6 +2,68 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from '../hooks/useTranslation'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 
+// EditModal Component
+const EditModal = ({ isOpen, initialTitle, onSave, onCancel, t }) => {
+  const [localTitle, setLocalTitle] = useState(initialTitle);
+
+  useEffect(() => {
+    setLocalTitle(initialTitle);
+  }, [initialTitle]);
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (localTitle.trim()) {
+      onSave(localTitle.trim());
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+            {t('sidebar.editChat')}
+          </h3>
+        </div>
+        <form onSubmit={handleSave}>
+          <div className="p-4">
+            <input
+              type="text"
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end space-x-2 p-4 bg-gray-50 dark:bg-gray-700">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              {t('actions.cancel')}
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+            >
+              {t('actions.save')}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Sidebar = ({ 
   chatList, 
   onNewChat, 
@@ -21,8 +83,7 @@ const Sidebar = ({
   const [editingChatId, setEditingChatId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editModalData, setEditModalData] = useState({ chatId: null, chatTitle: '' });
+  const [editModal, setEditModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
   const editInputRef = useRef(null)
 
   // Reset editing state when sidebar closes
@@ -30,8 +91,7 @@ const Sidebar = ({
     if (!isOpen) {
       setEditingChatId(null)
       setEditTitle('')
-      setEditModalOpen(false);
-      setEditModalData({ chatId: null, chatTitle: '' });
+      setEditModal({ isOpen: false, chatId: null, chatTitle: '' })
     }
   }, [isOpen])
 
@@ -59,25 +119,29 @@ const Sidebar = ({
     e.stopPropagation();
     
     if (isMobile) {
-      setEditModalData({ chatId: chat.id, chatTitle: chat.title });
-      setEditModalOpen(true);
+      setEditModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title });
     } else {
-      setEditingChatId(chat.id)
-      setEditTitle(chat.title)
+      setEditingChatId(chat.id);
+      setEditTitle(chat.title);
     }
-  }
+  };
 
   const handleSaveTitle = (chatId, newTitle) => {
     if (newTitle.trim()) {
-      onUpdateTitle(chatId, newTitle.trim())
+      onUpdateTitle(chatId, newTitle.trim());
     }
-    
-    // Reset states
-    setEditingChatId(null)
-    setEditTitle('')
-    setEditModalOpen(false);
-    setEditModalData({ chatId: null, chatTitle: '' });
-  }
+    setEditingChatId(null);
+    setEditTitle('');
+    setEditModal({ isOpen: false, chatId: null, chatTitle: '' });
+  };
+
+  const handleModalSave = (newTitle) => {
+    handleSaveTitle(editModal.chatId, newTitle);
+  };
+
+  const handleModalCancel = () => {
+    setEditModal({ isOpen: false, chatId: null, chatTitle: '' });
+  };
 
   const handleDeleteClick = (e, chat) => {
     e.stopPropagation()
@@ -90,80 +154,6 @@ const Sidebar = ({
       if (isMobile) onClose()
     }
   }
-
-  // Mobile Edit Modal Component
-  const EditModal = () => {
-    const [localTitle, setLocalTitle] = useState(editModalData.chatTitle);
-
-    useEffect(() => {
-      setLocalTitle(editModalData.chatTitle);
-    }, [editModalData.chatTitle]);
-
-    const handleSave = (e) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-      if (localTitle.trim()) {
-        onUpdateTitle(editModalData.chatId, localTitle.trim());
-      }
-      setEditModalOpen(false);
-    };
-
-    const handleCancel = (e) => {
-      e?.preventDefault();
-      e?.stopPropagation();
-      setEditModalOpen(false);
-    };
-
-    return (
-      <div 
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-      >
-        <div 
-          className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-        >
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-              {t('sidebar.editChat')}
-            </h3>
-          </div>
-          <form onSubmit={handleSave}>
-            <div className="p-4">
-              <input
-                type="text"
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                autoFocus
-              />
-            </div>
-            <div className="flex justify-end space-x-2 p-4 bg-gray-50 dark:bg-gray-700">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
-              >
-                {t('common.save')}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
 
   if (!isOpen) return null
 
@@ -320,8 +310,14 @@ const Sidebar = ({
         chatTitle={deleteModal.chatTitle}
       />
 
-      {/* Edit Modal for Mobile */}
-      {isMobile && editModalOpen && <EditModal />}
+      {/* Edit Modal */}
+      <EditModal
+        isOpen={editModal.isOpen}
+        initialTitle={editModal.chatTitle}
+        onSave={handleModalSave}
+        onCancel={handleModalCancel}
+        t={t}
+      />
     </>
   )
 }
