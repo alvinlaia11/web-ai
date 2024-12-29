@@ -93,9 +93,11 @@ const Sidebar = ({
 
   // Mobile Edit Modal Component
   const EditModal = () => {
-    if (!editModalOpen) return null;
-    
     const [localTitle, setLocalTitle] = useState(editModalData.chatTitle);
+
+    useEffect(() => {
+      setLocalTitle(editModalData.chatTitle);
+    }, [editModalData.chatTitle]);
 
     const handleSave = (e) => {
       e?.preventDefault();
@@ -104,19 +106,29 @@ const Sidebar = ({
         onUpdateTitle(editModalData.chatId, localTitle.trim());
       }
       setEditModalOpen(false);
-      setEditModalData({ chatId: null, chatTitle: '' });
     };
 
     const handleCancel = (e) => {
       e?.preventDefault();
       e?.stopPropagation();
       setEditModalOpen(false);
-      setEditModalData({ chatId: null, chatTitle: '' });
     };
 
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50">
-        <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+      <div 
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+      >
+        <div 
+          className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
               {t('sidebar.editChat')}
@@ -307,6 +319,9 @@ const Sidebar = ({
         }}
         chatTitle={deleteModal.chatTitle}
       />
+
+      {/* Edit Modal for Mobile */}
+      {isMobile && editModalOpen && <EditModal />}
     </>
   )
 }

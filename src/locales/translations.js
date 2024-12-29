@@ -31,6 +31,17 @@ export const translations = {
     },
     header: {
       title: 'Chat AI Assistant'
+    },
+    common: {
+      save: 'Simpan',
+      cancel: 'Batal',
+      delete: 'Hapus',
+      edit: 'Edit',
+      loading: 'Memuat...',
+      send: 'Kirim',
+      refresh: 'Segarkan',
+      settings: 'Pengaturan',
+      close: 'Tutup'
     }
   },
   en: {
@@ -65,6 +76,17 @@ export const translations = {
     },
     header: {
       title: 'Chat AI Assistant'
+    },
+    common: {
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      edit: 'Edit',
+      loading: 'Loading...',
+      send: 'Send',
+      refresh: 'Refresh',
+      settings: 'Settings',
+      close: 'Close'
     }
   }
 }
