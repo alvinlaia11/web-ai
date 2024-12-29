@@ -145,7 +145,15 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!inputPesan.trim()) return
+    if (!inputPesan.trim() || isLoading) return
+
+    // Tutup sidebar di mobile saat mengirim pesan
+    if (isMobile) {
+      setIsSidebarOpen(false)
+    }
+
+    setIsLoading(true)
+    // Gunakan activeChat yang sudah dideklarasikan sebelumnya
 
     const userMessage = {
       id: Date.now(),
@@ -166,8 +174,7 @@ function App() {
     if (isMobile) setIsSidebarOpen(false)
 
     // Generate title for new chat
-    const currentChat = chatList.find(chat => chat.id === activeChatId)
-    if (currentChat?.isNewChat) {
+    if (activeChat?.isNewChat) {
       const newTitle = await generateTitleFromMessage(inputPesan)
       updateChatTitle(activeChatId, newTitle)
       setChatList(prevList =>
@@ -223,6 +230,14 @@ function App() {
     }
   }
 
+  const handleChatSelect = (chatId) => {
+    setActiveChatId(chatId)
+    // Tutup sidebar di mobile saat memilih chat
+    if (isMobile) {
+      setIsSidebarOpen(false)
+    }
+  }
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen)
   }
@@ -257,7 +272,7 @@ function App() {
           isMobile={isMobile}
           onClose={() => setIsSidebarOpen(false)}
           activeChatId={activeChatId}
-          setActiveChatId={setActiveChatId}
+          setActiveChatId={handleChatSelect}
           onUpdateTitle={updateChatTitle}
           onDeleteChat={handleDeleteChat}
           onClearHistory={clearChatHistory}
