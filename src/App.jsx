@@ -35,6 +35,8 @@ function App() {
   })
 
   const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, chatId: null })
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [startY, setStartY] = useState(0)
 
   // Simpan chat ke localStorage setiap kali berubah
   useEffect(() => {
@@ -246,23 +248,52 @@ function App() {
     setIsSettingsOpen(!isSettingsOpen)
   }
 
+  // Fungsi untuk handle pull-to-refresh
+  const handleTouchStart = (e) => {
+    setStartY(e.touches[0].clientY)
+  }
+
+  const handleTouchMove = async (e) => {
+    const currentY = e.touches[0].clientY
+    const pull = currentY - startY
+
+    if (pull > 150 && !isRefreshing && window.scrollY === 0) { // Hanya refresh jika ditarik ke bawah >150px dan di posisi atas
+      setIsRefreshing(true)
+      
+      // Reload halaman
+      try {
+        window.location.reload()
+      } finally {
+        setIsRefreshing(false)
+      }
+    }
+  }
+
   return (
     <div className="fixed inset-0 flex bg-white dark:bg-gray-900">
       {isMobile && isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 touch-none"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        >
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-lg bg-white text-gray-700 hover:bg-gray-100"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar */}
       <div
         className={`${
           isMobile
             ? 'fixed inset-y-0 left-0 z-30'
             : 'relative'
         } flex-shrink-0 ${
-          isSidebarOpen ? 'w-64' : 'w-0'
+          isSidebarOpen ? 'w-80' : 'w-0'
         } transition-all duration-300 ease-in-out overflow-hidden border-r border-gray-200 dark:border-gray-700`}
       >
         <Sidebar
@@ -277,19 +308,21 @@ function App() {
           onDeleteChat={handleDeleteChat}
           onClearHistory={clearChatHistory}
           onOpenSettings={toggleSettings}
+          settings={settings}
         />
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900">
+      {/* Main Chat Area */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
         <div className="h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4">
           <button
             onClick={toggleSidebar}
-            className="p-2 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 bg-white text-purple-600 dark:bg-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6 transition-transform duration-300"
+              className="h-6 w-6"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -306,28 +339,30 @@ function App() {
         </div>
 
         <ChatArea
-          pesan={activeChatId ? chatList.find(chat => chat.id === activeChatId)?.messages || [] : []}
+          pesan={activeChat?.messages || []}
           inputPesan={inputPesan}
           setInputPesan={setInputPesan}
           onSubmit={handleSubmit}
           isLoading={isLoading}
         />
-      </div>
+      </main>
 
-      {isSettingsOpen && (
-        <Settings
-          isOpen={isSettingsOpen}
-          settings={settings}
-          onUpdateSettings={setSettings}
-          onClose={() => setIsSettingsOpen(false)}
-        />
-      )}
+      {/* Settings Modal */}
+      <Settings
+        isOpen={isSettingsOpen}
+        settings={settings}
+        onUpdateSettings={setSettings}
+        onClose={toggleSettings}
+      />
 
+      {/* Delete Confirmation */}
       <DeleteConfirmation
         isOpen={deleteConfirmation.isOpen}
-        onClose={() => setDeleteConfirmation({ isOpen: false, chatId: null })}
-        onConfirm={confirmDelete}
-        title="Hapus Chat"
+        onClose={() => setDeleteConfirmation({ ...deleteConfirmation, isOpen: false })}
+        onConfirm={() => {
+          handleConfirmDelete(deleteConfirmation.chatId)
+          setDeleteConfirmation({ ...deleteConfirmation, isOpen: false })
+        }}
       />
     </div>
   )

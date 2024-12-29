@@ -95,6 +95,29 @@ button:focus-visible {
   background: #6b7280;
 }
 
+/* Pull to refresh styles */
+.refresh-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, #9333ea, #6366f1);
+  transform-origin: 0 50%;
+  z-index: 1000;
+  transition: transform 0.2s ease-out;
+}
+
+/* Mengatur overscroll behavior */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+.chat-container {
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

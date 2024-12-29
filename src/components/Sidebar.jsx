@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from '../hooks/useTranslation'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 
 const Sidebar = ({ 
@@ -6,19 +7,23 @@ const Sidebar = ({
   onNewChat, 
   isOpen, 
   isMobile, 
-  onClose,
+  onClose, 
   activeChatId,
   setActiveChatId,
   onUpdateTitle,
   onDeleteChat,
   onClearHistory,
-  onOpenSettings
+  onOpenSettings,
+  settings
 }) => {
+  const { t } = useTranslation(settings?.language)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingChatId, setEditingChatId] = useState(null)
   const [editTitle, setEditTitle] = useState('')
   const [showMenu, setShowMenu] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, chatId: null, chatTitle: '' })
+  const [longPressTimer, setLongPressTimer] = useState(null)
+  const [isLongPress, setIsLongPress] = useState(false)
 
   // Fungsi untuk membersihkan format Markdown
   const cleanMarkdown = (text) => {
@@ -34,9 +39,11 @@ const Sidebar = ({
     chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const handleEditClick = (chat) => {
+  const handleEditClick = (e, chat) => {
+    e.stopPropagation() // Mencegah trigger event parent
     setEditingChatId(chat.id)
     setEditTitle(chat.title)
+    setShowMenu(null) // Tutup menu saat mulai edit
   }
 
   const handleSaveTitle = () => {
@@ -44,9 +51,11 @@ const Sidebar = ({
       onUpdateTitle(editingChatId, editTitle.trim())
     }
     setEditingChatId(null)
+    setShowMenu(null) // Tutup menu setelah save
   }
 
   const handleKeyPress = (e) => {
+    e.stopPropagation() // Mencegah trigger event parent
     if (e.key === 'Enter') {
       handleSaveTitle()
     }
@@ -67,23 +76,42 @@ const Sidebar = ({
     setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
   }
 
+  const handleTouchStart = (e, chatId) => {
+    e.stopPropagation()
+    const timer = setTimeout(() => {
+      setShowMenu(chatId)
+      setIsLongPress(true)
+    }, 500) // 500ms untuk long press
+    setLongPressTimer(timer)
+  }
+
+  const handleTouchEnd = (e) => {
+    e.stopPropagation()
+    if (longPressTimer) {
+      clearTimeout(longPressTimer)
+    }
+    // Jika bukan long press, biarkan click event normal terjadi
+    setTimeout(() => {
+      setIsLongPress(false)
+    }, 100)
+  }
+
+  const handleChatClick = (chatId) => {
+    if (!isLongPress) {
+      setActiveChatId(chatId)
+      if (isMobile) {
+        onClose()
+      }
+    }
+  }
+
   if (!isOpen) return null
 
   return (
     <>
       <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-        {/* Header dengan tombol close untuk mobile */}
+        {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          {isMobile && (
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
           <button
             onClick={() => {
               onNewChat()
@@ -94,7 +122,7 @@ const Sidebar = ({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            <span className="font-medium">Chat Baru</span>
+            <span className="font-medium">{t('sidebar.newChat')}</span>
           </button>
         </div>
 
@@ -103,7 +131,7 @@ const Sidebar = ({
           <div className="relative">
             <input
               type="text"
-              placeholder="Cari chat..."
+              placeholder={t('sidebar.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -119,7 +147,14 @@ const Sidebar = ({
           {filteredChats.map(chat => (
             <div 
               key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
+              onClick={() => handleChatClick(chat.id)}
+              onTouchStart={(e) => handleTouchStart(e, chat.id)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={(e) => {
+                if (longPressTimer) {
+                  clearTimeout(longPressTimer)
+                }
+              }}
               className={`group relative flex items-center p-3 space-x-3 cursor-pointer transition-all duration-200 ${
                 activeChatId === chat.id 
                   ? 'bg-purple-50 dark:bg-purple-900/20' 
@@ -139,12 +174,16 @@ const Sidebar = ({
                   <input
                     type="text"
                     value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      setEditTitle(e.target.value)
+                    }}
+                    onFocus={(e) => e.stopPropagation()}
                     onBlur={handleSaveTitle}
                     onKeyPress={handleKeyPress}
+                    onTouchStart={(e) => e.stopPropagation()}
                     className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
                     autoFocus
-                    onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
                   <>
@@ -161,10 +200,7 @@ const Sidebar = ({
               {/* Actions */}
               <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-x-1">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleEditClick(chat)
-                  }}
+                  onClick={(e) => handleEditClick(e, chat)}
                   className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -194,10 +230,40 @@ const Sidebar = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>Pengaturan</span>
+            <span>{t('sidebar.settings')}</span>
           </button>
         </div>
       </div>
+
+      {/* Menu Items - Tampilkan sebagai modal di mobile */}
+      {showMenu !== null && (
+        <div 
+          className={`${isMobile ? 'fixed inset-x-0 bottom-0 p-4 bg-white dark:bg-gray-800 rounded-t-2xl shadow-lg z-50' : 'absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5'}`}
+          onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          <div className="py-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleEditClick(e, chatList.find(chat => chat.id === showMenu))
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('sidebar.editChat')}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleDeleteClick(e, chatList.find(chat => chat.id === showMenu))
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              {t('sidebar.deleteChat')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal

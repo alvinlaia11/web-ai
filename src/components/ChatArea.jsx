@@ -16,6 +16,7 @@ const ChatArea = ({ pesan, inputPesan, setInputPesan, onSubmit, isLoading }) => 
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Chat messages */}
       <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 px-4 py-4" ref={chatContainerRef}>
         <div className="max-w-3xl mx-auto space-y-4">
           {pesan.length === 0 ? (
