@@ -47,11 +47,17 @@ const Sidebar = ({
     e.stopPropagation()
     setEditingChatId(chat.id)
     setEditTitle(chat.title)
+    // Mencegah sidebar tertutup saat mulai mengedit di mobile
+    e.preventDefault()
   }
 
   const handleSaveTitle = () => {
     if (editTitle.trim()) {
       onUpdateTitle(editingChatId, editTitle.trim())
+      // Tutup sidebar di mobile setelah selesai edit
+      if (isMobile) {
+        setTimeout(() => onClose(), 200) // Delay sedikit agar user bisa melihat perubahan
+      }
     }
     setEditingChatId(null)
   }
@@ -59,6 +65,9 @@ const Sidebar = ({
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       handleSaveTitle()
+    } else if (e.key === 'Escape') {
+      setEditingChatId(null)
+      setEditTitle('')
     }
   }
 
@@ -67,16 +76,17 @@ const Sidebar = ({
     setDeleteModal({ isOpen: true, chatId: chat.id, chatTitle: chat.title })
   }
 
-  const handleConfirmDelete = () => {
-    onDeleteChat(deleteModal.chatId)
-    setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
-  }
-
   const handleChatClick = (chatId) => {
     if (!editingChatId) {
       setActiveChatId(chatId)
-      if (isMobile) onClose()
+      // Hanya tutup sidebar jika tidak sedang dalam mode edit
+      if (isMobile && !editingChatId) onClose()
     }
+  }
+
+  const handleConfirmDelete = () => {
+    onDeleteChat(deleteModal.chatId)
+    setDeleteModal({ isOpen: false, chatId: null, chatTitle: '' })
   }
 
   if (!isOpen) return null
@@ -144,9 +154,10 @@ const Sidebar = ({
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     onBlur={handleSaveTitle}
-                    onKeyPress={handleKeyPress}
+                    onKeyDown={handleKeyPress}
                     className="w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-purple-500"
                     autoFocus
+                    style={{ fontSize: isMobile ? '16px' : 'inherit' }} // Mencegah zoom otomatis di iOS
                   />
                 ) : (
                   <>
@@ -161,7 +172,7 @@ const Sidebar = ({
               </div>
 
               {/* Actions */}
-              <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 space-x-1">
+              <div className={`flex-shrink-0 ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity duration-200 space-x-1`}>
                 <button
                   onClick={(e) => handleEditClick(e, chat)}
                   className="p-1.5 bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
