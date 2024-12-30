@@ -177,19 +177,22 @@ const Sidebar = ({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {editingChatId === chat.id ? (
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      onKeyDown={handleKeyPress}
-                      onBlur={handleSaveTitle}
-                      autoFocus
-                      className="w-full px-2 py-1 bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-600 rounded focus:outline-none focus:border-purple-500 dark:focus:border-purple-400"
-                    />
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        onBlur={handleInputBlur}
+                        autoFocus
+                        className="w-auto min-w-[120px] px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-purple-300 dark:border-purple-600 rounded focus:outline-none focus:border-purple-500 dark:focus:border-purple-400"
+                        ref={editInputRef}
+                      />
+                    </div>
                   ) : (
                     <div className="flex items-center justify-between group">
                       <div className="flex-1 min-w-0 overflow-hidden">
-                        <div title={chat.title} className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <div title={chat.title} className="text-sm font-medium text-gray-600 dark:text-white truncate">
                           {chat.titleKey ? t(`chat.${chat.titleKey}`) : (chat.title || t('chat.untitled'))}
                         </div>
                         {chat.lastMessage && (
@@ -198,16 +201,16 @@ const Sidebar = ({
                           </div>
                         )}
                       </div>
-                      <div className="flex-shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`flex-shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity ${editingChatId ? 'hidden' : ''}`}>
                         <button
                           title="Edit Chat"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleEditClick(e, chat)
                           }}
-                          className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg transition-colors active:shadow-none focus:outline-none select-none"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{WebkitTapHighlightColor: 'transparent'}} draggable="false">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
                         </button>
@@ -217,9 +220,9 @@ const Sidebar = ({
                             e.stopPropagation()
                             handleDeleteClick(e, chat.id)
                           }}
-                          className="p-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                          className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg transition-colors active:shadow-none focus:outline-none select-none"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{WebkitTapHighlightColor: 'transparent'}} draggable="false">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
@@ -231,22 +234,22 @@ const Sidebar = ({
                 {/* Actions */}
                 <div className={`absolute right-2 space-x-1 ${
                   activeChatId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                } transition-opacity`}>
+                } transition-opacity ${editingChatId ? 'hidden' : ''}`}>
                   <button
                     title="Edit Chat"
                     onClick={(e) => handleEditClick(e, chat)}
-                    className="p-1.5 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-lg transition-colors active:shadow-none focus:outline-none select-none"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{WebkitTapHighlightColor: 'transparent'}} draggable="false">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
                   <button
                     title="Delete Chat"
                     onClick={(e) => handleDeleteClick(e, chat.id)}
-                    className="p-1.5 bg-red-50 text-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 rounded-lg transition-colors"
+                    className="p-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg transition-colors active:shadow-none focus:outline-none select-none"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 select-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{WebkitTapHighlightColor: 'transparent'}} draggable="false">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
