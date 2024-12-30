@@ -31,11 +31,33 @@ Aplikasi chat AI yang memungkinkan pengguna untuk berinteraksi dengan asisten AI
   - Sedang
   - Besar
 
+### Fitur Terbaru
+
+#### Keamanan dan Privasi
+- Enkripsi end-to-end untuk data chat
+- Penyimpanan lokal yang aman
+- Tidak ada data yang dikirim ke server selain untuk komunikasi dengan AI
+- Penghapusan data yang aman
+
+#### Optimasi Performa
+- Lazy loading untuk riwayat chat
+- Kompresi data untuk penyimpanan efisien
+- Caching untuk respons AI yang sering digunakan
+- Optimasi rendering untuk daftar chat panjang
+
+#### Aksesibilitas
+- Dukungan screen reader
+- Navigasi keyboard yang lengkap
+- Kontras warna yang memenuhi standar WCAG
+- Mode high contrast
+
 ### Antarmuka Responsif
 - Tampilan optimal di desktop dan mobile
 - Sidebar yang dapat disembunyikan
 - Gestur sentuh untuk mobile
 - Pull-to-refresh untuk memperbarui konten
+- Dukungan untuk orientasi landscape dan portrait
+- Adaptive layout untuk berbagai ukuran layar
 
 ### Desain Modern
 - Antarmuka yang bersih dan intuitif
@@ -48,9 +70,12 @@ Aplikasi chat AI yang memungkinkan pengguna untuk berinteraksi dengan asisten AI
 - **AI Model**: Google Gemini
 - **Frontend**: React.js
 - **Styling**: Tailwind CSS
-- **State Management**: React Hooks
+- **State Management**: React Hooks & Context API
 - **Routing**: React Router
 - **Icons**: Heroicons
+- **Testing**: Jest
+- **Linting**: ESLint
+- **Formatting**: Prettier
 
 ## Instalasi
 
@@ -90,9 +115,20 @@ npm run dev
 3. Chat akan otomatis tersimpan
 
 ### Mengelola Chat
-- **Edit Judul**: Klik kanan pada chat (desktop) atau tekan lama (mobile)
-- **Hapus Chat**: Klik kanan pada chat (desktop) atau tekan lama (mobile)
-- **Cari Chat**: Gunakan kolom pencarian di bagian atas sidebar
+- **Edit Judul**: 
+  - Klik ikon pensil di sebelah judul chat
+  - Masukkan judul baru
+  - Tekan Enter untuk menyimpan atau Esc untuk membatalkan
+- **Hapus Chat**: 
+  - Klik ikon tempat sampah di sebelah chat
+  - Konfirmasi penghapusan di dialog yang muncul
+- **Cari Chat**: 
+  - Gunakan kolom pencarian di bagian atas sidebar
+  - Pencarian dilakukan pada judul dan isi pesan terakhir
+  - Hasil pencarian ditampilkan secara real-time
+- **Bersihkan Riwayat**:
+  - Klik tombol "Bersihkan Semua" di bagian bawah sidebar
+  - Konfirmasi untuk menghapus semua riwayat chat
 
 ### Mengubah Pengaturan
 1. Klik ikon pengaturan di bagian bawah sidebar
