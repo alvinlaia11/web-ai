@@ -177,17 +177,19 @@ const Sidebar = ({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {editingChatId === chat.id ? (
-                    <div className="flex-1 min-w-0">
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={handleKeyPress}
-                        onBlur={handleInputBlur}
-                        autoFocus
-                        className="w-auto min-w-[120px] px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-purple-300 dark:border-purple-600 rounded focus:outline-none focus:border-purple-500 dark:focus:border-purple-400"
-                        ref={editInputRef}
-                      />
+                    <div className="flex-1 min-w-0 max-w-[calc(100%-3rem)]">
+                      <div>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={handleKeyPress}
+                          onBlur={handleInputBlur}
+                          autoFocus
+                          className="w-full max-w-full px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-purple-300 dark:border-purple-600 rounded focus:outline-none focus:border-purple-500 dark:focus:border-purple-400 text-sm"
+                          ref={editInputRef}
+                        />
+                      </div>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between group">
