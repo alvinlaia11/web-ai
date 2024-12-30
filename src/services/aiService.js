@@ -46,19 +46,19 @@ class AIService {
           safetySettings: [
             {
               category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              threshold: "BLOCK_ONLY_HIGH"
             },
             {
               category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              threshold: "BLOCK_ONLY_HIGH"
             },
             {
               category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              threshold: "BLOCK_ONLY_HIGH"
             },
             {
               category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              threshold: "BLOCK_ONLY_HIGH"
             }
           ]
         })
@@ -82,7 +82,19 @@ class AIService {
       return candidate.content.parts[0].text
     } catch (error) {
       console.error('Error in Gemini Service:', error)
-      throw error
+      
+      // Menangani berbagai jenis error
+      if (error.message.includes('safety')) {
+        throw new Error('Maaf, konten yang diminta tidak dapat diproses karena kebijakan keamanan. Silakan coba dengan permintaan yang berbeda.')
+      } else if (error.message.includes('No response')) {
+        throw new Error('Maaf, AI tidak dapat memberikan respons saat ini. Silakan coba lagi.')
+      } else if (error.message.includes('Invalid response format')) {
+        throw new Error('Terjadi kesalahan format respons. Silakan coba lagi.')
+      } else if (error.message.includes('Gemini API Error')) {
+        throw new Error('Terjadi kesalahan saat berkomunikasi dengan AI. Silakan coba lagi dalam beberapa saat.')
+      } else {
+        throw new Error('Terjadi kesalahan. Silakan coba lagi atau hubungi administrator jika masalah berlanjut.')
+      }
     }
   }
 
