@@ -286,6 +286,17 @@ function App() {
     localStorage.setItem('chatList', JSON.stringify([]))
   }
 
+  const handleInputChange = (value) => {
+    setInputPesan(value)
+    // Jika tidak ada chat aktif dan user mulai mengetik, buat chat baru
+    if (!activeChatId && value.trim()) {
+      const chatStore = useChatStore.getState()
+      const newChat = chatStore.createNewChat(settings)
+      setChatList(prev => [newChat, ...prev])
+      setActiveChatId(newChat.id)
+    }
+  }
+
   return (
     <div className="fixed inset-0 flex bg-white dark:bg-gray-900" translate="no">
       {isMobile && isSidebarOpen && (
@@ -360,7 +371,7 @@ function App() {
         <ChatArea
           pesan={activeChat?.messages || []}
           inputPesan={inputPesan}
-          setInputPesan={setInputPesan}
+          setInputPesan={handleInputChange}
           onSubmit={handleSubmit}
           isLoading={isLoading}
           isMobile={isMobile}
